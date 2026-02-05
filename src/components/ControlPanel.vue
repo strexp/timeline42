@@ -38,18 +38,25 @@
           @input="onSearchInput"
         />
       </div>
-
-      <label class="checkbox-wrapper" title="Hide items shorter than 10 days">
-        <input
-          type="checkbox"
-          :checked="filterShortDuration"
-          @change="(e) => $emit('update:filterShortDuration', (e.target as HTMLInputElement).checked)"
-        />
-        <span class="checkbox-label">Hide &lt; 30d</span>
-      </label>
     </div>
 
     <div class="group">
+      <label class="toggle-control" title="Hide/Dim items shorter than 10 days">
+        <input
+          type="checkbox"
+          :checked="filterShortDuration"
+          @change="
+            (e) => $emit('update:filterShortDuration', (e.target as HTMLInputElement).checked)
+          "
+        />
+        <span class="toggle-track">
+          <span class="toggle-thumb"></span>
+        </span>
+        <span class="label">Hide &lt; 30d</span>
+      </label>
+
+      <div class="divider"></div>
+
       <div class="density-control">
         <span class="label">Density</span>
         <input
@@ -190,33 +197,43 @@ input[type='text']:focus {
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
 
-/* Checkbox Style */
-.checkbox-wrapper {
+/* Toggle Switch */
+.toggle-control {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   cursor: pointer;
-  user-select: none;
+}
+.toggle-control input {
+  display: none;
+}
+.toggle-track {
+  width: 36px;
+  height: 20px;
+  background: var(--border);
+  border-radius: 10px;
+  position: relative;
+  transition: background 0.2s;
+}
+.toggle-thumb {
+  width: 16px;
+  height: 16px;
   background: white;
-  padding: 8px 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  transition: all 0.2s;
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
-.checkbox-wrapper:hover {
-  background: var(--bg-hover);
-  border-color: var(--border-hover);
+input:checked + .toggle-track {
+  background: var(--primary);
 }
-.checkbox-label {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-main);
+input:checked + .toggle-track .toggle-thumb {
+  transform: translateX(16px);
 }
-input[type='checkbox'] {
-  accent-color: var(--primary);
-  width: 14px;
-  height: 14px;
-  cursor: pointer;
+input:hover + .toggle-track {
+  opacity: 0.9;
 }
 
 /* Slider */
