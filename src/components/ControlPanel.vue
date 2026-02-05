@@ -38,6 +38,15 @@
           @input="onSearchInput"
         />
       </div>
+
+      <label class="checkbox-wrapper" title="Hide items shorter than 10 days">
+        <input
+          type="checkbox"
+          :checked="filterShortDuration"
+          @change="(e) => $emit('update:filterShortDuration', (e.target as HTMLInputElement).checked)"
+        />
+        <span class="checkbox-label">Hide &lt; 30d</span>
+      </label>
     </div>
 
     <div class="group">
@@ -79,12 +88,14 @@ defineProps<{
   dataType: DataType
   searchQuery: string
   density: number
+  filterShortDuration: boolean
 }>()
 
 const emit = defineEmits<{
   (e: 'update:dataType', value: DataType): void
   (e: 'update:searchQuery', value: string): void
   (e: 'update:density', value: number): void
+  (e: 'update:filterShortDuration', value: boolean): void
   (e: 'reset'): void
 }>()
 
@@ -177,6 +188,35 @@ input[type='text'] {
 input[type='text']:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+/* Checkbox Style */
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+  background: white;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: all 0.2s;
+}
+.checkbox-wrapper:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-hover);
+}
+.checkbox-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-main);
+}
+input[type='checkbox'] {
+  accent-color: var(--primary);
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
 }
 
 /* Slider */

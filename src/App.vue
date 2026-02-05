@@ -13,6 +13,7 @@
       v-model:dataType="dataType"
       v-model:searchQuery="searchQuery"
       v-model:density="density"
+      v-model:filterShortDuration="filterShortDuration"
       @reset="onReset"
     />
   </header>
@@ -40,6 +41,7 @@ const dataType = ref<DataType>('aut-num')
 const searchQuery = ref('')
 const density = ref(30)
 const resetTrigger = ref(0)
+const filterShortDuration = ref(true)
 
 const { loadData, isLoading, allItems, allCategories } = useRegistryData()
 
@@ -47,51 +49,66 @@ const { loadData, isLoading, allItems, allCategories } = useRegistryData()
 const filteredData = shallowRef<ChartDataTuple[]>([])
 const filteredCategories = shallowRef<string[]>([])
 
+// Constants
+const MIN_DURATION_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
+
 // Filtering Logic
 const runFilter = () => {
   const query = searchQuery.value.trim().toLowerCase()
+  const shouldFilterDuration = filterShortDuration.value
 
-  if (!query) {
-    filteredData.value = allItems.value
-    filteredCategories.value = allCategories.value
-    return
+  const rawItems = allItems.value
+  const rawCategories = allCategories.value
+
+  const validItems: ChartDataTuple[] = []
+  const activeCategoryIndices = new Set<number>()
+
+  for (let i = 0; i < rawItems.length; i++) {
+    const item = rawItems[i]
+    // Tuple: [catIdx, start, end, label, bg, border]
+    const catIdx = item[0]
+    const start = item[1]
+    const end = item[2]
+    const categoryName = rawCategories[catIdx]
+
+    // Check Duration
+    if (shouldFilterDuration) {
+      if (end - start < MIN_DURATION_MS) {
+        continue
+      }
+    }
+
+    // Check Search Query (Filter by Category Name)
+    if (query) {
+      if (!categoryName.toLowerCase().includes(query)) {
+        continue
+      }
+    }
+
+    // Item passed all checks
+    validItems.push(item)
+    activeCategoryIndices.add(catIdx)
   }
 
-  const matchedCategoryIndices = new Set<number>()
-  const matchingCategories: string[] = []
+  const newCategories: string[] = []
+  const oldToNewIndexMap = new Map<number, number>()
 
-  allCategories.value.forEach((cat, index) => {
-    if (cat.toLowerCase().includes(query)) {
-      matchedCategoryIndices.add(index)
-      matchingCategories.push(cat)
+  // Iterate original categories to maintain sort order
+  rawCategories.forEach((cat, oldIdx) => {
+    if (activeCategoryIndices.has(oldIdx)) {
+      oldToNewIndexMap.set(oldIdx, newCategories.length)
+      newCategories.push(cat)
     }
   })
 
-  filteredCategories.value = matchingCategories
-
-  const indexMap = new Map<number, number>()
-  let newIdx = 0
-  allCategories.value.forEach((_, oldIdx) => {
-    if (matchedCategoryIndices.has(oldIdx)) {
-      indexMap.set(oldIdx, newIdx++)
-    }
+  const result: ChartDataTuple[] = validItems.map(item => {
+    const oldIdx = item[0]
+    const newIdx = oldToNewIndexMap.get(oldIdx)!
+    // Return new tuple with updated index
+    return [newIdx, item[1], item[2], item[3], item[4], item[5]]
   })
 
-  const result: ChartDataTuple[] = []
-  const items = allItems.value
-  const len = items.length
-
-  for (let i = 0; i < len; i++) {
-    const item = items[i]
-    if (!item) continue
-    const oldCatIdx = item[0]
-
-    if (matchedCategoryIndices.has(oldCatIdx)) {
-      // [newIndex, start, end, label, bg, border]
-      result.push([indexMap.get(oldCatIdx)!, item[1], item[2], item[3], item[4], item[5]])
-    }
-  }
-
+  filteredCategories.value = newCategories
   filteredData.value = result
 }
 
@@ -99,6 +116,7 @@ const runFilter = () => {
 const onReset = () => {
   searchQuery.value = ''
   density.value = 30
+  filterShortDuration.value = true
   resetTrigger.value++
 }
 
@@ -108,7 +126,7 @@ watch(dataType, async (newType) => {
   runFilter()
 })
 
-watch(searchQuery, runFilter)
+watch([searchQuery, filterShortDuration], runFilter)
 
 // Init
 onMounted(async () => {
