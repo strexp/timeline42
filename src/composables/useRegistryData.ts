@@ -54,8 +54,8 @@ export function useRegistryData() {
 
         let colorSeed = item.content
         if (type === 'aut-num' || type === 'organisation') {
-          const mnter = item.content.split('|').slice(-1).pop()
-          if (mnter) colorSeed = mnter
+          const mnter = item.content.split('|').slice(-1).pop()?.trim()
+          if (mnter && mnter != 'DN42-MNT') colorSeed = mnter
           else colorSeed = item.content
         }
 
