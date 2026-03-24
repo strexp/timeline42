@@ -25,6 +25,8 @@
       :is-loading="isLoading"
       :density="density"
       :reset-trigger="resetTrigger"
+      :data-type="dataType"
+      :online-isps="onlineIsps"
     />
   </main>
 </template>
@@ -46,7 +48,7 @@ const density = ref(30)
 const resetTrigger = ref(0)
 const filterShortDuration = ref(true)
 
-const { loadData, isLoading, allItems, allCategories } = useRegistryData()
+const { loadData, isLoading, allItems, allCategories, onlineIsps } = useRegistryData()
 
 // Filtered Data
 const filteredData = shallowRef<ChartDataTuple[]>([])
@@ -115,14 +117,7 @@ const runFilter = () => {
         border = '#cbd5e1' // muted border
       }
 
-      result.push([
-        indexMap.get(oldCatIdx)!,
-        item[1],
-        item[2],
-        item[3],
-        bg,
-        border
-      ])
+      result.push([indexMap.get(oldCatIdx)!, item[1], item[2], item[3], bg, border])
     }
   }
 

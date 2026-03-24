@@ -7,7 +7,12 @@ export interface RawDataItem {
   title: string
 }
 
-// [categoryIndex, startTimestamp, endTimestamp, label, bgColor, borderColor]
+export interface IspItem {
+  asn: string
+  name: string
+}
+
+//[categoryIndex, startTimestamp, endTimestamp, label, bgColor, borderColor]
 export type ChartDataTuple = [number, number, number, string, string, string]
 
 export interface ColorPalette {

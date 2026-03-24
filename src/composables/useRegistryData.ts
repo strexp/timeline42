@@ -1,5 +1,5 @@
 import { ref, shallowRef } from 'vue'
-import type { DataType, ChartDataTuple, RawDataItem } from '@/types'
+import type { DataType, ChartDataTuple, RawDataItem, IspItem } from '@/types'
 import { generateColors } from '@/utils/colors'
 
 export function useRegistryData() {
@@ -8,13 +8,31 @@ export function useRegistryData() {
 
   const allItems = shallowRef<ChartDataTuple[]>([])
   const allCategories = shallowRef<string[]>([])
+  const onlineIsps = shallowRef<Map<string, string>>(new Map())
+
+  let ispsFetched = false
 
   const loadData = async (type: DataType) => {
     isLoading.value = true
     error.value = null
-    allItems.value = []
+    allItems.value =[]
 
     try {
+      if (!ispsFetched) {
+        try {
+          const ispResponse = await fetch('https://bgp-data.strexp.net/isp/isp.json')
+          if (ispResponse.ok) {
+            const isps: IspItem[] = await ispResponse.json()
+            const ispMap = new Map<string, string>()
+            isps.forEach((isp) => ispMap.set(`AS${isp.asn}`, isp.name))
+            onlineIsps.value = ispMap
+            ispsFetched = true
+          }
+        } catch (err) {
+          console.warn('Failed to fetch ISP data', err)
+        }
+      }
+
       const response = await fetch(`https://bgp-data.strexp.net/history/${type}.json`)
       if (!response.ok) throw new Error(`Failed to load ${type} data`)
 
@@ -35,7 +53,7 @@ export function useRegistryData() {
         const endTs = item.end ? new Date(item.end).getTime() : now
         const colors = generateColors(item.content)
 
-        return [
+        return[
           groupToIndex.get(item.group) ?? -1,
           startTs,
           endTs,
@@ -60,6 +78,7 @@ export function useRegistryData() {
     error,
     allItems,
     allCategories,
+    onlineIsps,
     loadData,
   }
 }

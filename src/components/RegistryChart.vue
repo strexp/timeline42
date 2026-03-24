@@ -21,7 +21,7 @@ import { TooltipComponent, GridComponent, DataZoomComponent } from 'echarts/comp
 import { CanvasRenderer } from 'echarts/renderers'
 import * as echarts from 'echarts/core'
 import VChart from 'vue-echarts'
-import type { ChartDataTuple } from '@/types'
+import type { ChartDataTuple, DataType } from '@/types'
 import type { EChartsCoreOption } from 'echarts'
 import type {
   CustomSeriesRenderItemAPI,
@@ -36,6 +36,8 @@ const props = defineProps<{
   isLoading: boolean
   density: number
   resetTrigger: number
+  dataType: DataType
+  onlineIsps: Map<string, string>
 }>()
 
 const chartRef = ref<InstanceType<typeof VChart> | null>(null)
@@ -152,11 +154,25 @@ const option = computed(() => {
         const days = Math.floor((val[2] - val[1]) / 86400000)
         const color = val[5]
 
+        let headerExtra = ''
+        if (props.dataType === 'aut-num') {
+          const isOnline = props.onlineIsps.has(name)
+          const statusColor = isOnline ? '#10b981' : '#94a3b8'
+          const statusText = isOnline ? 'Online' : 'Offline'
+          const ispName = isOnline ? props.onlineIsps.get(name) : ''
+
+          headerExtra = `<span style="background:${statusColor}; color:white; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 8px; vertical-align: middle;">${statusText}</span>`
+          if (ispName) {
+            headerExtra += `<div style="font-size: 11px; color: #94a3b8; margin-top: 6px; padding-left: 16px;">${ispName}</div>`
+          }
+        }
+
         return `
           <div class="ec-tooltip-container">
-            <div class="ec-tooltip-header">
-              <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${color}"></span>
-              <span>${name}</span>
+            <div class="ec-tooltip-header" style="margin-bottom: 8px;">
+              <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${color};margin-right:4px;"></span>
+              <span style="font-weight:bold;">${name}</span>
+              ${headerExtra}
             </div>
             <div style="margin-bottom:8px; color:#93c5fd; font-weight:600;">${val[3]}</div>
             <div class="ec-tooltip-row"><span>Start</span> <span class="ec-tooltip-val">${start}</span></div>
@@ -253,6 +269,20 @@ const option = computed(() => {
         fontSize: 12,
         align: 'right',
         padding: [0, 10, 0, 0],
+        formatter: (value: string) => {
+          if (props.dataType === 'aut-num') {
+            if (props.onlineIsps.has(value)) {
+              return '{online|●} ' + value
+            } else {
+              return '{offline|●} ' + value
+            }
+          }
+          return value
+        },
+        rich: {
+          online: { color: '#10b981', fontSize: 10, padding: [0, 4, 0, 0] },
+          offline: { color: '#94a3b8', fontSize: 10, padding: [0, 4, 0, 0] },
+        },
       },
     },
     series: [
