@@ -15,7 +15,7 @@ export function useRegistryData() {
   const loadData = async (type: DataType) => {
     isLoading.value = true
     error.value = null
-    allItems.value =[]
+    allItems.value = []
 
     try {
       if (!ispsFetched) {
@@ -51,9 +51,17 @@ export function useRegistryData() {
       const transformed: ChartDataTuple[] = rawJson.map((item) => {
         const startTs = new Date(item.start).getTime()
         const endTs = item.end ? new Date(item.end).getTime() : now
-        const colors = generateColors(item.content)
 
-        return[
+        let colorSeed = item.content
+        if (type === 'aut-num' || type === 'organisation') {
+          const mnter = item.content.split('|').slice(-1).pop()
+          if (mnter) colorSeed = mnter
+          else colorSeed = item.content
+        }
+
+        const colors = generateColors(colorSeed)
+
+        return [
           groupToIndex.get(item.group) ?? -1,
           startTs,
           endTs,
